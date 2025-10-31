@@ -1,0 +1,30 @@
+{
+  "name": "exchange-tracker-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "chart.js": "^4.4.0",
+    "core-js": "^3.30.0",
+    "firebase": "^11.10.0",
+    "pinia": "^2.0.34",
+    "vue": "^3.3.4",
+    "vue-chartjs": "^5.1.1",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
+    "@vitejs/plugin-vue": "^4.2.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.5.2",
+    "vite": "^5.2.0",
+    "vite-plugin-pwa": "^0.21.0"
+  }
+}
