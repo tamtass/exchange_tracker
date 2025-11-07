@@ -1,5 +1,43 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-html, body, #app { height: 100%; }
+@theme {
+  --color-dark-grey: #1E1E1E;
+  --color-dark-grey-50: #2D2D2D;
+  --color-dark-grey-100: #282828;
+  --color-dark-grey-200: #232323;
+  
+  --color-pastel-green-300: #B7E3C9;
+  --color-pastel-green-400: #98D8B1;
+  --color-pastel-green-500: #6CC891;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #1E1E1E;
+  color: #f3f4f6;
+}
+
+#app {
+  min-height: 100vh;
+  background-color: #1E1E1E;
+}
+
+/* Custom shadow utilities for pastel green glow */
+.shadow-pastel-green-400\/20 {
+  box-shadow: 0 10px 40px -5px rgba(152, 216, 177, 0.2);
+}
+
+.shadow-pastel-green-400\/30 {
+  box-shadow: 0 4px 20px -2px rgba(152, 216, 177, 0.3);
+}
+
+.shadow-pastel-green-400\/50 {
+  box-shadow: 0 10px 30px -5px rgba(152, 216, 177, 0.5);
+}
+
+/* Smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
