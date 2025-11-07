@@ -48,34 +48,29 @@ export default defineComponent({
       labels: []
     }
 
-    // Watch for changes in tracked currencies
     watch(() => props.trackedCurrencies, (newCurrencies) => {
       if (newCurrencies.length > 0 && !selectedCurrency.value) {
         selectedCurrency.value = newCurrencies[0]
       }
-      // If selected currency was removed, switch to first available
       if (!newCurrencies.includes(selectedCurrency.value) && newCurrencies.length > 0) {
         selectedCurrency.value = newCurrencies[0]
         updateChart()
       }
     }, { immediate: true })
 
-    // Watch for changes in data limit
     watch(() => props.dataLimit, () => {
-      // Unsubscribe from old query
       if (unsubscribe) {
         unsubscribe()
       }
-      // Re-setup listener with new limit
       setupFirestoreListener()
     })
 
     const getCurrencyColor = (currency: string) => {
       const colors: Record<string, string> = {
-        HUF: '#98D8B1',  // Pastel green
-        USD: '#6CC891',  // Darker pastel green
-        GBP: '#B7E3C9',  // Lighter pastel green
-        RON: '#44B572'   // Deep green
+        HUF: '#98D8B1',
+        USD: '#6CC891',
+        GBP: '#B7E3C9',
+        RON: '#44B572'
       }
       return colors[currency] || '#98D8B1'
     }
@@ -93,23 +88,20 @@ export default defineComponent({
     }
 
     const setupFirestoreListener = () => {
-      // Listen to Firestore changes
       const q = query(
         collection(db, 'exchangeRates'),
         orderBy('timestamp', 'desc'),
-        limit(props.dataLimit) // Use prop value
+        limit(props.dataLimit)
       )
 
       unsubscribe = onSnapshot(q, (snapshot) => {
         const labels: string[] = []
         const dataByCurrency: Record<string, number[]> = {}
 
-        // Initialize arrays for all tracked currencies
         props.trackedCurrencies.forEach(curr => {
           dataByCurrency[curr] = []
         })
 
-        // Reverse to show oldest first (left to right)
         snapshot.docs.reverse().forEach((doc) => {
           const data = doc.data()
           const timestamp = data.timestamp?.toDate()
@@ -125,13 +117,11 @@ export default defineComponent({
           }
         })
 
-        // Cache the data
         cachedData = {
           labels,
           ...dataByCurrency
         }
 
-        // Update chart with selected currency
         updateChart()
       }, (error) => {
         console.error('Error fetching chart data:', error)
@@ -141,7 +131,6 @@ export default defineComponent({
     onMounted(() => {
       if (!canvas.value) return
 
-      // Initialize chart with empty data
       chart = new Chart(canvas.value, {
         type: 'line',
         data: {

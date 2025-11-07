@@ -313,12 +313,11 @@ export default defineComponent({
     const trackedCurrencies = ref<string[]>(['HUF', 'USD', 'GBP', 'RON'])
     const showSettings = ref(false)
     const showAlerts = ref(false)
-    const refreshRate = ref(30000) // Default 30 seconds
+    const refreshRate = ref(30000)
     const tempRefreshRate = ref(30000)
-    const chartDataLimit = ref(20) // Default 20 data points
+    const chartDataLimit = ref(20)
     const tempDataLimit = ref(20)
     
-    // Alerts state
     const alerts = ref<Array<{id: number, currency: string, type: 'above' | 'below', value: number}>>([])
     const newAlert = ref({
       currency: '',
@@ -345,7 +344,6 @@ export default defineComponent({
       { label: '200 points', value: 200 }
     ]
 
-    // Computed property to filter rates based on tracked currencies
     const displayedRates = computed(() => {
       if (!rates.value || !rates.value.rates) return {}
       
@@ -358,7 +356,6 @@ export default defineComponent({
       return filtered
     })
 
-    // List of popular currencies to add
     const allCurrencies = [
       { code: 'HUF', name: 'Hungarian Forint' },
       { code: 'USD', name: 'US Dollar' },
@@ -399,13 +396,9 @@ export default defineComponent({
         rates.value = data
         lastUpdate.value = new Date().toLocaleTimeString()
 
-        // Check alerts
         checkAlerts(data)
 
-        // Save to Firestore - handle the actual API structure
         try {
-          console.log('Attempting to save to Firestore...')
-          
           const rateData = {
             base: data.base || 'EUR',
             rates: data.rates || data,
@@ -413,21 +406,9 @@ export default defineComponent({
             date: new Date().toISOString().split('T')[0]
           }
           
-          console.log('Prepared data for Firestore:', rateData)
-          
-          const docRef = await addDoc(collection(db, 'exchangeRates'), rateData)
-          
-          console.log('✅ Rates saved successfully! Document ID:', docRef.id)
+          await addDoc(collection(db, 'exchangeRates'), rateData)
         } catch (dbErr: any) {
-          console.error('❌ Firestore save error:', dbErr)
-          console.error('Error code:', dbErr.code)
-          console.error('Error message:', dbErr.message)
-          
-          if (dbErr.code === 'permission-denied') {
-            console.error('🔒 Permission denied! Check Firestore security rules.')
-          } else if (dbErr.code === 'unavailable') {
-            console.error('🌐 Firestore unavailable. Check internet connection.')
-          }
+          console.error('Firestore save error:', dbErr)
         }
       } catch (err: any) {
         console.error('Error fetching rates:', err)
@@ -442,16 +423,16 @@ export default defineComponent({
         trackedCurrencies.value.push(selectedNewCurrency.value)
         selectedNewCurrency.value = ''
         showAddCurrency.value = false
-        saveUserPreferences() // Save to Firestore
-        loadRates() // Reload rates with new currency
+        saveUserPreferences()
+        loadRates()
       }
     }
 
     const removeCurrency = (currency: string) => {
       if (trackedCurrencies.value.length > 1) {
         trackedCurrencies.value = trackedCurrencies.value.filter(c => c !== currency)
-        saveUserPreferences() // Save to Firestore
-        loadRates() // Reload rates without removed currency
+        saveUserPreferences()
+        loadRates()
       } else {
         alert('You must track at least one currency!')
       }
@@ -462,17 +443,14 @@ export default defineComponent({
       chartDataLimit.value = tempDataLimit.value
       showSettings.value = false
       
-      // Restart interval with new refresh rate
       if (intervalId !== null) {
         clearInterval(intervalId)
       }
       intervalId = window.setInterval(loadRates, refreshRate.value)
-      
-      console.log(`Settings saved: Refresh rate=${refreshRate.value}ms, Data points=${chartDataLimit.value}`)
+      saveUserPreferences()
     }
 
     const cancelSettings = () => {
-      // Reset temp values to current values
       tempRefreshRate.value = refreshRate.value
       tempDataLimit.value = chartDataLimit.value
       showSettings.value = false
@@ -487,22 +465,19 @@ export default defineComponent({
           value: newAlert.value.value
         })
         
-        // Reset form
         newAlert.value = {
           currency: '',
           type: '',
           value: null
         }
         
-        saveUserPreferences() // Save to Firestore
-        console.log('Alert created:', alerts.value[alerts.value.length - 1])
+        saveUserPreferences()
       }
     }
 
     const removeAlert = (id: number) => {
       alerts.value = alerts.value.filter(alert => alert.id !== id)
-      saveUserPreferences() // Save to Firestore
-      console.log('Alert removed:', id)
+      saveUserPreferences()
     }
 
     const checkAlerts = (data: any) => {
@@ -521,16 +496,13 @@ export default defineComponent({
         
         if (triggered) {
           const message = `🔔 Alert: EUR/${alertItem.currency} is ${alertItem.type} ${alertItem.value}! Current rate: ${currentRate.toFixed(4)}`
-          console.log(message)
           
-          // Show browser notification if available
           if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Exchange Rate Alert', {
               body: message,
               icon: '/favicon.svg'
             })
           } else {
-            // Fallback to window.alert
             window.alert(message)
           }
         }
@@ -546,9 +518,8 @@ export default defineComponent({
           chartDataLimit: chartDataLimit.value,
           updatedAt: serverTimestamp()
         })
-        console.log('✅ User preferences saved to Firestore')
       } catch (err) {
-        console.error('❌ Error saving preferences:', err)
+        console.error('Error saving preferences:', err)
       }
     }
 
@@ -559,7 +530,6 @@ export default defineComponent({
         
         if (docSnap.exists()) {
           const data = docSnap.data()
-          console.log('📥 Loading user preferences from Firestore:', data)
           
           if (data.trackedCurrencies && data.trackedCurrencies.length > 0) {
             trackedCurrencies.value = data.trackedCurrencies
@@ -567,7 +537,6 @@ export default defineComponent({
           
           if (data.alerts) {
             alerts.value = data.alerts
-            // Update alertIdCounter to avoid ID conflicts
             if (data.alerts.length > 0) {
               alertIdCounter = Math.max(...data.alerts.map((a: any) => a.id)) + 1
             }
@@ -582,28 +551,18 @@ export default defineComponent({
             chartDataLimit.value = data.chartDataLimit
             tempDataLimit.value = data.chartDataLimit
           }
-          
-          console.log('✅ User preferences loaded successfully')
-        } else {
-          console.log('ℹ️ No saved preferences found, using defaults')
         }
       } catch (err) {
-        console.error('❌ Error loading preferences:', err)
+        console.error('Error loading preferences:', err)
       }
     }
 
     onMounted(async () => {
-      console.log('Dashboard mounted. Loading user preferences...')
-      
-      // Request notification permission
       if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission()
       }
       
-      // Load user preferences before starting rate fetching
       await loadUserPreferences()
-      
-      console.log('Starting rate fetching...')
       await loadRates()
       intervalId = window.setInterval(loadRates, refreshRate.value)
     })
@@ -611,7 +570,6 @@ export default defineComponent({
     onBeforeUnmount(() => {
       if (intervalId !== null) {
         clearInterval(intervalId)
-        console.log('Dashboard unmounted. Stopped rate fetching.')
       }
     })
 
